@@ -1,0 +1,268 @@
+import math
+import numpy as np
+
+try:
+    from pyflann import FLANN
+    HAS_FLANN = True
+except ImportError:
+    HAS_FLANN = False
+
+try:
+    from pykdtree.kdtree import KDTree
+    HAS_PYKD = True
+except ImportError:
+    HAS_PYKD = False
+
+if not (HAS_PYKD or HAS_FLANN):
+    raise ImportError("Must be able to import either pykdtree or pyflann")
+
+# with numba with get significant speedups
+try: 
+    import numba
+    from algebra_numba import norm, dot, equal, compute_radius, cos_angle
+except:
+    from algebra import norm, dot, equal, compute_radius, cos_angle
+
+# FIXME: can't handle duplicate points in input
+
+class MASB(object):
+
+    def __init__(self, datadict, max_r, denoise_absmin=None, denoise_delta=None, denoise_min=None, detect_planar=None):
+        self.D = datadict # dict of numpy arrays
+
+        if HAS_PYKD:
+            # pykdtree is much faster so preferred when available
+            self.pykdtree = KDTree(self.D['coords'])
+        elif HAS_FLANN:
+            # linear algorithm means brute force, which means its exact nn, which we need
+            # approximate nn may cause algorithm not to converge
+            self.pyflann = FLANN()
+            self.pyflann.build_index(self.D['coords'], algorithm='linear',target_precision=1, sample_fraction=0.001,  log_level = "info")
+
+        self.m, self.n = datadict['coords'].shape
+        self.D['ma_coords_in'] = np.empty( (self.m,self.n) )
+        self.D['ma_coords_in'][:] = np.nan
+        self.D['ma_coords_out'] = np.empty( (self.m,self.n) )
+        self.D['ma_coords_out'][:] = np.nan
+        self.D['ma_radii_in'] = np.empty( (self.m) )
+        self.D['ma_radii_in'][:] = np.nan
+        self.D['ma_radii_out'] = np.empty( (self.m) )
+        self.D['ma_radii_out'][:] = np.nan
+        self.D['ma_q_in'] = np.zeros( (self.m), dtype=np.int )
+        self.D['ma_q_in'][:] = np.nan
+        self.D['ma_q_out'] = np.zeros( (self.m), dtype=np.int )
+        self.D['ma_q_out'][:] = np.nan
+
+        self.SuperR = max_r
+        self.delta_convergence = 0.001
+        self.iteration_limit = 30
+
+        if denoise_absmin is None:
+            self.denoise_absmin = None
+        else:
+            self.denoise_absmin = (math.pi/180)*denoise_absmin
+        if denoise_delta is None:
+            self.denoise_delta = None
+        else:
+            self.denoise_delta = (math.pi/180)*denoise_delta
+        if denoise_min is None:
+            self.denoise_min = None
+        else:
+            self.denoise_min = (math.pi/180)*denoise_min
+
+        if detect_planar is None:
+            self.detect_planar = None
+        else:
+            self.detect_planar = (math.pi/180)*detect_planar
+
+    def compute_lfs(self):
+
+        # collect all ma_coords that are not NaN
+        ma_coords = np.concatenate([self.D['ma_coords_in'], self.D['ma_coords_out']])
+        ma_coords = ma_coords[~np.isnan(ma_coords).any(axis=1)]
+
+        # build kd-tree of ma_coords to compute lfs
+        if HAS_PYKD:
+            pykdtree = KDTree(ma_coords)
+            self.D['lfs'] = np.sqrt(pykdtree.query(self.D['coords'], 1)[0])
+        elif HAS_FLANN:
+            pyflann = FLANN()
+            pyflann.build_index(ma_coords, algorithm='linear')
+            self.D['lfs'] = np.sqrt(pyflann.nn_index(self.D['coords'], 1)[1])
+
+    def decimate_lfs(self, epsilon, max_pointspacing=None, scramble=True, sort=False, squared=False):
+
+        # for this we really need FLANN because it has nn_radius query
+        if not hasattr(self, 'pyflann'):
+            if not HAS_FLANN:
+                raise ImportError('Need FLANN/pyflann for this function')
+            self.pyflann = FLANN()
+            self.pyflann.build_index(self.D['coords'])#, algorithm='linear'
+        self.D['decimate_lfs'] = np.zeros(self.m) == True
+
+        # order matters when decimating
+        order = np.arange(self.m)
+        plfs = zip(order, self.D['coords'], self.D['lfs'])
+
+        if scramble: 
+            from random import shuffle
+            shuffle( plfs )
+        if sort:
+            plfs.sort(key = lambda item: item[2])
+            plfs.reverse()
+
+        # this loop is highly inefficient but does the job
+        for i, p, lfs in plfs:
+            if squared:
+                lfs = lfs**2
+
+            # rho is used here for disk radius as in paper Dey01
+            if max_pointspacing is None:
+                rho = lfs*epsilon
+            else:
+                rho = min(lfs*epsilon, max_pointspacing)
+
+            qts = self.pyflann.nn_radius(p, rho**2)[0][1:]
+            qts = order[qts]
+            
+            iqts = np.invert(self.D['decimate_lfs'][qts])
+            if iqts.any():
+                self.D['decimate_lfs'][i] = True
+
+    def compute_balls(self, inner=True):
+        """Balls shrinking algorithm. Set `inner` to False when outer balls are wanted."""
+
+        # iterate over all point-normal pairs
+        for p_i, pn in enumerate(zip(self.D['coords'], self.D['normals'])):
+            #-- p is the point along whose normal n we are shrinking a ball, its index is p_i
+            p, n = pn
+            if not inner:
+                n = -n
+            
+            # initialize some helper variables:
+            #-- q will represent the second point that defines a ball together with p and n
+            q = None 
+            #-- q_i is the index of q
+            q_i = None
+            #-- r represents the ball radius found in the current iteration (i.e. of the while loop below)
+            r = None
+            #-- r_previous represents the ball radius found in the previous iteration
+            r_previous=self.SuperR
+            #-- c is the ball's center point in the current iteration
+            c = None
+            #-- c_previous is the ball's center point in the previous iteration
+            c_previous = None
+            #-- j counts the iterations
+            j = -1
+            
+            while True:
+                # increment iteration counter
+                j+=1
+                # set r to last found radius if this isn't the first iteration
+                if j>0:
+                    r_previous = r
+
+                # compute ball center
+                c = p - n*r_previous
+                
+                # keep track of this for denoising purpose
+                q_i_previous = q_i
+
+
+                ### FINDING NEAREST NEIGHBOR OF c
+
+                # find closest point to c and assign to q
+                if HAS_PYKD:
+                    dists, indices = self.pykdtree.query(np.array([c]), k=2)
+                elif HAS_FLANN:
+                    indices, dists = self.pyflann.nn_index(c, 2)
+
+                candidate_c = self.D['coords'][indices]
+                q = candidate_c[0][0]
+                q_i = indices[0][0]
+                
+                # What to do if closest point is p itself?
+                if equal(q,p):
+                    # 1) if r_previous==SuperR, apparantly no other points on the halfspace spanned by -n => that's an infinite ball
+                    if r_previous == self.SuperR: 
+                        r = r_previous
+                        break
+                    # 2) otherwise just pick the second closest point
+                    else: 
+                        q = candidate_c[0][1]
+                        q_i = indices[0][1]
+
+                ### END FINDING NEAREST NEIGHBOR OF c
+                # import pdb; pdb.set_trace()
+                # compute new candidate radius r
+                try:
+                    r = compute_radius(p,n,q)
+                except ZeroDivisionError:
+                    # this happens on some rare occasions, we'll just skip the point
+                    # print 'ZeroDivisionError: excepting p: {} with n={} and q={}'.format(p,n,q)
+                    break
+
+
+                ### EXCEPTIONAL CASES
+
+                # if r < 0 closest point was on the wrong side of plane with normal n => start over with SuperRadius on the right side of that plane
+                if r < 0: 
+                    r = self.SuperR
+                # if r > SuperR, stop now because otherwise in case of planar surface point configuration, we end up in an infinite loop
+                elif r > self.SuperR:
+                    r = self.SuperR
+                    break
+
+                ### END EXCEPTIONAL CASES
+
+
+                ### DENOISING STUFF
+                # i.e. terminate iteration early if certain conditions are satisfied based on (history of) ball metrics
+
+                c_ = p - n*r
+                # this seems to work well against noisy ma points.
+                if self.denoise_absmin is not None:
+                    if math.acos(cos_angle(p-c_, q-c_)) < self.denoise_absmin and j>0 and r>norm(q-p):
+                        # keep previous radius:
+                        r=r_previous
+                        q_i = q_i_previous
+                        break
+
+                if self.denoise_delta is not None and j>0:
+                    theta_now = math.acos(cos_angle(p-c_, q-c_))
+                    q_previous = self.D['coords'][q_i_previous]
+                    theta_prev = math.acos(cos_angle(p-c_, q_previous-c_))
+                    
+                    if theta_prev-theta_now > self.denoise_delta and theta_now < self.denoise_min and r>norm(q-p):
+                        # keep previous radius:
+                        r=r_previous
+                        q_i = q_i_previous
+                        break
+
+                if self.detect_planar != None:
+                    if math.acos( cos_angle(q-p, -n) ) > self.detect_planar and j<2:
+                        r= self.SuperR
+                        break
+
+                ### END DENOISING STUFF
+
+
+                # stop iteration if r has converged
+                if abs(r_previous - r) < self.delta_convergence:
+                    break
+
+                # stop iteration if this looks like an infinite loop:
+                if j > self.iteration_limit:
+                    print "breaking for possible infinite loop"
+                    break
+
+            # now store valid points in array (invalid points will be NaN)
+            if inner: inout = 'in'
+            else: inout = 'out'
+            
+            if r >= self.SuperR:
+                pass
+            else:
+                self.D['ma_radii_'+inout][p_i] = r
+                self.D['ma_coords_'+inout][p_i] = c
+                self.D['ma_q_'+inout][p_i] = q_i
