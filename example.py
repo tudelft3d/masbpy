@@ -1,10 +1,11 @@
-from masbpy import MASB, read_ply
+from masbpy import MASB
+from masbpy import io_ply
 from masbpy.write import write_coords_filtered, write_coords_lfs_colored, write_ma_coords
 
 
 if __name__ == '__main__':
     # read points and normals from a ply file
-    datadict = read_ply('example-data/house_dyke_tree.ply')
+    datadict = io_ply.read_ply('example-data/house_dyke_tree.ply')
     
     # compute interior and exterior MAT
     ma = MASB(datadict, 10)
