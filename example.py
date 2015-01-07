@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # write MA points to file
     write_ma_coords(datadict)
 
-    # compute Local Feature Size and write result to file for visuatization
+    # compute Local Feature Size and write result to file for visualization
     ma.compute_lfs()
     write_coords_lfs_colored(datadict)
 
