@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-def write_npy(datadict, dir):
+def write_npy(dir, datadict):
 	if not os.path.exists(dir):
 	    os.makedirs(dir)
 
@@ -9,7 +9,7 @@ def write_npy(datadict, dir):
 		fname = os.path.join(dir,key)
 		np.save(fname, val)
 
-def read_npy(keys, dir):
+def read_npy(dir, keys):
 	assert os.path.exists(dir)
 
 	datadict = {}	
