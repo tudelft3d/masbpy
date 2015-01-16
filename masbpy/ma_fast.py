@@ -1,5 +1,6 @@
 from numpy.random import rand
 from numpy import array, zeros, concatenate, nan
+import numpy as np
 from itertools import chain
 
 from pykdtree.kdtree import KDTree
@@ -211,7 +212,7 @@ class MASB(object):
             if r_ >= self.SuperR or r_ == None:
                 pass
             else:
-                ma_radii[i] = r_
+                # ma_radii[i] = r_
                 ma_coords[i] = c
                 ma_f2[i] = q_i
             # q_history_list.append(q_history[:-1])
