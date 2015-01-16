@@ -18,7 +18,7 @@
 import os
 import numpy as np
 
-def write_npy(dir, datadict):
+def write_npy(dir, datadict, keys=None):
 	if not os.path.exists(dir):
 	    os.makedirs(dir)
 
