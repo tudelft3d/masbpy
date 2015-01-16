@@ -57,18 +57,18 @@ class MASB(object):
             self.pyflann.build_index(self.D['coords'], algorithm='linear',target_precision=1, sample_fraction=0.001,  log_level = "info")
 
         self.m, self.n = datadict['coords'].shape
-        self.D['ma_coords_in'] = np.empty( (self.m,self.n) )
+        self.D['ma_coords_in'] = np.empty( (self.m,self.n), dtype=np.float32 )
         self.D['ma_coords_in'][:] = np.nan
-        self.D['ma_coords_out'] = np.empty( (self.m,self.n) )
+        self.D['ma_coords_out'] = np.empty( (self.m,self.n), dtype=np.float32 )
         self.D['ma_coords_out'][:] = np.nan
-        self.D['ma_radii_in'] = np.empty( (self.m) )
-        self.D['ma_radii_in'][:] = np.nan
-        self.D['ma_radii_out'] = np.empty( (self.m) )
-        self.D['ma_radii_out'][:] = np.nan
-        self.D['ma_q_in'] = np.zeros( (self.m), dtype=np.int )
+        # self.D['ma_radii_in'] = np.empty( (self.m) )
+        # self.D['ma_radii_in'][:] = np.nan
+        # self.D['ma_radii_out'] = np.empty( (self.m) )
+        # self.D['ma_radii_out'][:] = np.nan
+        self.D['ma_q_in'] = np.zeros( (self.m), dtype=np.int32 )
         self.D['ma_q_in'][:] = np.nan
-        self.D['ma_q_out'] = np.zeros( (self.m), dtype=np.int )
-        self.D['ma_q_out'][:] = np.nan
+        # self.D['ma_q_out'] = np.zeros( (self.m), dtype=np.int )
+        # self.D['ma_q_out'][:] = np.nan
 
         self.SuperR = max_r
         self.delta_convergence = 0.001
@@ -210,7 +210,6 @@ class MASB(object):
                         q_i = indices[0][1]
 
                 ### END FINDING NEAREST NEIGHBOR OF c
-                # import pdb; pdb.set_trace()
                 # compute new candidate radius r
                 try:
                     r = compute_radius(p,n,q)
@@ -270,7 +269,7 @@ class MASB(object):
 
                 # stop iteration if this looks like an infinite loop:
                 if j > self.iteration_limit:
-                    print "breaking for possible infinite loop"
+                    # print "breaking for possible infinite loop"
                     break
 
             # now store valid points in array (invalid points will be NaN)
@@ -280,6 +279,6 @@ class MASB(object):
             if r >= self.SuperR:
                 pass
             else:
-                self.D['ma_radii_'+inout][p_i] = r
+                # self.D['ma_radii_'+inout][p_i] = r
                 self.D['ma_coords_'+inout][p_i] = c
                 self.D['ma_q_'+inout][p_i] = q_i
