@@ -76,15 +76,15 @@ class MASB(object):
 
         result.sort(key=lambda item: (item[1], item[0]))
 
-        self.D['ma_coords_out'] = concatenate([ma_coords for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[:n] ])
-        self.D['ma_radii_out'] = concatenate([ma_radii for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[:n] ])
-        self.D['ma_f2_out'] = concatenate([ma_f2 for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[:n] ])
-        self.D['ma_shrinkhist_out'] = list(chain(*[shrinkhist for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[:n] ]))
+        self.D['ma_coords_out'] = concatenate([ma_coords for start, inner, ma_coords, ma_f2 in result[:n] ])
+        # self.D['ma_radii_out'] = concatenate([ma_radii for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[:n] ])
+        self.D['ma_f2_out'] = concatenate([ma_f2 for start, inner, ma_coords, ma_f2 in result[:n] ])
+        # self.D['ma_shrinkhist_out'] = list(chain(*[shrinkhist for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[:n] ]))
         
-        self.D['ma_coords_in'] = concatenate([ma_coords for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[n:] ])
-        self.D['ma_radii_in'] = concatenate([ma_radii for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[n:] ])
-        self.D['ma_f2_in'] = concatenate([ma_f2 for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[n:] ])
-        self.D['ma_shrinkhist_in'] = list(chain(*[shrinkhist for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[n:] ]))
+        self.D['ma_coords_in'] = concatenate([ma_coords for start, inner, ma_coords, ma_f2 in result[n:] ])
+        # self.D['ma_radii_in'] = concatenate([ma_radii for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[n:] ])
+        self.D['ma_f2_in'] = concatenate([ma_f2 for start, inner, ma_coords, ma_f2 in result[n:] ])
+        # self.D['ma_shrinkhist_in'] = list(chain(*[shrinkhist for start, inner, ma_coords, ma_radii, ma_f2, shrinkhist in result[n:] ]))
         
         print "Finished datamerging in {} s".format(time()-t2)
 
@@ -94,11 +94,11 @@ class MASB(object):
         """Balls shrinking algorithm. Set `inner` to False when outer balls are wanted."""
         print 'processing', start, end, "inner:", inner#, hex(id(self.kd_tree)), hex(id(self.D))
         m = end-start
-        ma_coords = zeros((m, self.n))
+        ma_coords = zeros((m, self.n), dtype=np.float32)
         ma_coords[:] = nan
-        ma_radii = zeros(m)
-        ma_radii[:] = nan
-        ma_f2 = zeros(m)
+        # ma_radii = zeros(m)
+        # ma_radii[:] = nan
+        ma_f2 = zeros(m, dtype=np.float32)
         ma_f2[:] = nan
         if self.denoise != None:
             self.denoise = (math.pi/180)*self.denoise
@@ -106,7 +106,7 @@ class MASB(object):
             self.denoise_delta = (math.pi/180)*self.denoise_delta
         if self.detect_planar != None:
             self.detect_planar = (math.pi/180)*self.detect_planar
-        q_history_list = []
+        # q_history_list = []
         ZeroDivisionError_cnt = 0
         for i, pi in enumerate(xrange(start,end)):
             p, n = self.D['coords'][pi], self.D['normals'][pi]
@@ -161,7 +161,7 @@ class MASB(object):
                         q = candidate_c[0][1]
                         q_i = results[0][1]
                 
-                q_history.append(q_i)
+                # q_history.append(q_i)
                 # compute new candidate radius r_
                 try:
                     r_ = compute_radius(p,n,q)
@@ -214,9 +214,9 @@ class MASB(object):
                 ma_radii[i] = r_
                 ma_coords[i] = c
                 ma_f2[i] = q_i
-            q_history_list.append(q_history[:-1])
+            # q_history_list.append(q_history[:-1])
 
-        result = ( start, inner, ma_coords, ma_radii, ma_f2, q_history_list )
+        result = ( start, inner, ma_coords, ma_f2 )
         queue.put( result )
 
         print '{} ZeroDivisionErrors'.format(ZeroDivisionError_cnt)
