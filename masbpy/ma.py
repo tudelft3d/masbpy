@@ -65,9 +65,9 @@ class MASB(object):
         # self.D['ma_radii_in'][:] = np.nan
         # self.D['ma_radii_out'] = np.empty( (self.m) )
         # self.D['ma_radii_out'][:] = np.nan
-        self.D['ma_q_in'] = np.zeros( (self.m), dtype=np.int32 )
+        self.D['ma_q_in'] = np.zeros( (self.m), dtype=np.uint32 )
         self.D['ma_q_in'][:] = np.nan
-        self.D['ma_q_out'] = np.zeros( (self.m), dtype=np.int )
+        self.D['ma_q_out'] = np.zeros( (self.m), dtype=np.uint32 )
         self.D['ma_q_out'][:] = np.nan
 
         self.SuperR = max_r
