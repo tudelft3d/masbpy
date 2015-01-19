@@ -99,7 +99,7 @@ class MASB(object):
         ma_coords[:] = nan
         # ma_radii = zeros(m)
         # ma_radii[:] = nan
-        ma_f2 = zeros(m, dtype=np.float32)
+        ma_f2 = zeros(m, dtype=np.uint32)
         ma_f2[:] = nan
         if self.denoise != None:
             self.denoise = (math.pi/180)*self.denoise
