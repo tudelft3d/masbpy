@@ -36,6 +36,11 @@ def read_npy(dir, keys):
 			datadict[key] = np.load(fname)
 	return datadict
 
+def inspect_npy(dir):
+	from glob import glob
+	dir = os.path.join(dir,'*')
+	return [os.path.split(f)[-1].split('.')[0] for f in glob(dir)]
+
 
 # dtypes = dict()
 # # see http://docs.scipy.org/doc/numpy/reference/generated/numpy.dtype.html#numpy.dtype

@@ -17,7 +17,7 @@
 
 import numpy as np
 
-def read_las(infile, keys):
+def read_las(infile, keys=None):
 	from laspy.file import File
 
 	inFile = File(infile)
