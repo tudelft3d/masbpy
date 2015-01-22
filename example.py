@@ -2,8 +2,7 @@ from masbpy import MASB
 from masbpy import io_ply
 from masbpy.write import write_coords_filtered, write_coords_lfs_colored, write_ma_coords
 
-
-if __name__ == '__main__':
+def main():
     # read points and normals from a ply file
     datadict = io_ply.read_ply('example-data/house_dyke_tree.ply')
     
@@ -21,3 +20,6 @@ if __name__ == '__main__':
     # perform thinning and write result to file
     ma.decimate_lfs(epsilon=0.4)
     write_coords_filtered(datadict, filter_key='decimate_lfs')
+
+if __name__ == '__main__':
+    main()
