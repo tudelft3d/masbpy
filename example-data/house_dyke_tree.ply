@@ -8,7 +8,6 @@ property float z
 property float nx
 property float ny
 property float nz
-element face 5202
 property list uchar int vertex_indices
 end_header
 4.66304 8.53716 0.118777 0 0.926505 0.376282 

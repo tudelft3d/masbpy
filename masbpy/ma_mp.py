@@ -36,7 +36,7 @@ class MASB(object):
         self(queue,0,datalen, False, False)
         return queue.get() + queue.get()
 
-    def compute_mp(self, num_processes=cpu_count()):
+    def compute_balls(self, num_processes=cpu_count()):
         datalen = len(self.D['coords'])
         
         n = num_processes/2 # we are spawning 2 processes (inner and outer ma) per n

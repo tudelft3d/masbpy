@@ -17,26 +17,12 @@
 
 import math
 import numpy as np
+from pykdtree.kdtree import KDTree
 
-try:
-    from pyflann import FLANN
-    HAS_FLANN = True
-except ImportError:
-    HAS_FLANN = False
-
-try:
-    from pykdtree.kdtree import KDTree
-    HAS_PYKD = True
-except ImportError:
-    HAS_PYKD = False
-
-if not (HAS_PYKD or HAS_FLANN):
-    raise ImportError("Must be able to import either pykdtree or pyflann")
-
-# with numba with get significant speedups
+# with numba we get significant speedups
 try: 
     import numba
-    from algebra_numba import norm, dot, equal, compute_radius, cos_angle
+    from algebra import norm, dot, equal, compute_radius, cos_angle
 except:
     from algebra import norm, dot, equal, compute_radius, cos_angle
 
@@ -47,24 +33,13 @@ class MASB(object):
     def __init__(self, datadict, max_r, denoise_absmin=None, denoise_delta=None, denoise_min=None, detect_planar=None):
         self.D = datadict # dict of numpy arrays
 
-        if HAS_PYKD:
-            # pykdtree is much faster so preferred when available
-            self.pykdtree = KDTree(self.D['coords'])
-        elif HAS_FLANN:
-            # linear algorithm means brute force, which means its exact nn, which we need
-            # approximate nn may cause algorithm not to converge
-            self.pyflann = FLANN()
-            self.pyflann.build_index(self.D['coords'], algorithm='linear',target_precision=1, sample_fraction=0.001,  log_level = "info")
+        self.pykdtree = KDTree(self.D['coords'])
 
         self.m, self.n = datadict['coords'].shape
         self.D['ma_coords_in'] = np.empty( (self.m,self.n), dtype=np.float32 )
         self.D['ma_coords_in'][:] = np.nan
         self.D['ma_coords_out'] = np.empty( (self.m,self.n), dtype=np.float32 )
         self.D['ma_coords_out'][:] = np.nan
-        # self.D['ma_radii_in'] = np.empty( (self.m) )
-        # self.D['ma_radii_in'][:] = np.nan
-        # self.D['ma_radii_out'] = np.empty( (self.m) )
-        # self.D['ma_radii_out'][:] = np.nan
         self.D['ma_q_in'] = np.zeros( (self.m), dtype=np.uint32 )
         self.D['ma_q_in'][:] = np.nan
         self.D['ma_q_out'] = np.zeros( (self.m), dtype=np.uint32 )
@@ -92,61 +67,11 @@ class MASB(object):
         else:
             self.detect_planar = (math.pi/180)*detect_planar
 
-    def compute_lfs(self):
+    def compute_balls(self):
+        for inner in ['in', 'out']:
+            self.compute_balls_oneside(inner)
 
-        # collect all ma_coords that are not NaN
-        ma_coords = np.concatenate([self.D['ma_coords_in'], self.D['ma_coords_out']])
-        ma_coords = ma_coords[~np.isnan(ma_coords).any(axis=1)]
-
-        # build kd-tree of ma_coords to compute lfs
-        if HAS_PYKD:
-            pykdtree = KDTree(ma_coords)
-            self.D['lfs'] = np.sqrt(pykdtree.query(self.D['coords'], 1)[0])
-        elif HAS_FLANN:
-            pyflann = FLANN()
-            pyflann.build_index(ma_coords, algorithm='linear')
-            self.D['lfs'] = np.sqrt(pyflann.nn_index(self.D['coords'], 1)[1])
-
-    def decimate_lfs(self, epsilon, max_pointspacing=None, scramble=True, sort=False, squared=False):
-
-        # for this we really need FLANN because it has nn_radius query
-        if not hasattr(self, 'pyflann'):
-            if not HAS_FLANN:
-                raise ImportError('Need FLANN/pyflann for this function')
-            self.pyflann = FLANN()
-            self.pyflann.build_index(self.D['coords'])#, algorithm='linear'
-        self.D['decimate_lfs'] = np.zeros(self.m) == True
-
-        # order matters when decimating
-        order = np.arange(self.m)
-        plfs = zip(order, self.D['coords'], self.D['lfs'])
-
-        if scramble: 
-            from random import shuffle
-            shuffle( plfs )
-        if sort:
-            plfs.sort(key = lambda item: item[2])
-            plfs.reverse()
-
-        # this loop is highly inefficient but does the job
-        for i, p, lfs in plfs:
-            if squared:
-                lfs = lfs**2
-
-            # rho is used here for disk radius as in paper Dey01
-            if max_pointspacing is None:
-                rho = lfs*epsilon
-            else:
-                rho = min(lfs*epsilon, max_pointspacing)
-
-            qts = self.pyflann.nn_radius(p, rho**2)[0][1:]
-            qts = order[qts]
-            
-            iqts = np.invert(self.D['decimate_lfs'][qts])
-            if iqts.any():
-                self.D['decimate_lfs'][i] = True
-
-    def compute_balls(self, inner=True):
+    def compute_balls_oneside(self, inner=True):
         """Balls shrinking algorithm. Set `inner` to False when outer balls are wanted."""
 
         # iterate over all point-normal pairs
@@ -194,7 +119,13 @@ class MASB(object):
                 elif HAS_FLANN:
                     indices, dists = self.pyflann.nn_index(c, 2)
 
-                candidate_c = self.D['coords'][indices]
+                try:
+                    candidate_c = self.D['coords'][indices]
+                except IndexError as detail:
+                    print detail, indices, dists
+                    import pdb; pdb.set_trace()
+                    raise
+
                 q = candidate_c[0][0]
                 q_i = indices[0][0]
                 

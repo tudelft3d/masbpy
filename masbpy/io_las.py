@@ -18,7 +18,11 @@
 import numpy as np
 
 def read_las(infile, keys=None):
-	from laspy.file import File
+	try:
+		from laspy.file import File
+	except ImportError:
+		print "Cannot read las files without laspy module"
+		raise
 
 	inFile = File(infile)
 	datadict = {}

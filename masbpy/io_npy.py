@@ -40,28 +40,3 @@ def inspect_npy(dir):
 	from glob import glob
 	dir = os.path.join(dir,'*')
 	return [os.path.split(f)[-1].split('.')[0] for f in glob(dir)]
-
-
-# dtypes = dict()
-# # see http://docs.scipy.org/doc/numpy/reference/generated/numpy.dtype.html#numpy.dtype
-# dtypes['coords'] = np.dtype([('coords', '3<f4')])
-# dtypes['normals'] = np.dtype([('normals', '3<f4')])
-# dtypes['ma_coords_in'] = np.dtype([('ma_coords_in', '3<f4')])
-# dtypes['ma_coords_out'] = np.dtype([('ma_coords_out', '3<f4')])
-# dtypes['lfs'] = np.dtype([('lfs', '<f8')])
-
-# def write_bin(datadict, dir):
-# 	if not os.path.exists(dir):
-# 	    os.makedirs(dir)
-
-# 	for key,val in datadict.items():
-# 		if dtypes.has_key(key):
-# 			fname = os.path.join(dir,key)
-# 			val.tofile(fname)
-
-# def read_bin(dir):
-# 	datadict = {}
-# 	for name, dtype in dtypes.items():
-# 		fname = os.path.join(dir,name)
-# 		datadict[name] = np.fromfile(fname, dtype=dtype)
-# 	return datadict

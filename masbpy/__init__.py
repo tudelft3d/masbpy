@@ -14,5 +14,3 @@
 # along with masbpy.  If not, see <http://www.gnu.org/licenses/>.
 
 # Copyright 2014 Ravi Peters
-
-from ma import MASB

@@ -1,6 +1,8 @@
-from masbpy import MASB
-from masbpy import io_ply
-from masbpy.write import write_coords_filtered, write_coords_lfs_colored, write_ma_coords
+from masbpy.ma import MASB
+# or for multiprocessing:
+# from masbpy.ma_mp import MASB
+
+from masbpy import io_npy, io_ply
 
 def main():
     # read points and normals from a ply file
@@ -8,18 +10,10 @@ def main():
     
     # compute interior and exterior MAT
     ma = MASB(datadict, 10)
-    ma.compute_balls(inner=True)
-    ma.compute_balls(inner=False)
+    ma.compute_balls
+
     # write MA points to file
-    write_ma_coords(datadict)
-
-    # compute Local Feature Size and write result to file for visualization
-    ma.compute_lfs()
-    write_coords_lfs_colored(datadict)
-
-    # perform thinning and write result to file
-    ma.decimate_lfs(epsilon=0.4)
-    write_coords_filtered(datadict, filter_key='decimate_lfs')
+    io_npy.write_npy('house_dyke_tree_npy', datadict)
 
 if __name__ == '__main__':
     main()
