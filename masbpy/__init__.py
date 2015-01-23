@@ -13,4 +13,4 @@
 # You should have received a copy of the GNU General Public License
 # along with masbpy.  If not, see <http://www.gnu.org/licenses/>.
 
-# Copyright 2014 Ravi Peters
+# Copyright 2015 Ravi Peters
