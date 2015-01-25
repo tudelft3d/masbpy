@@ -68,7 +68,7 @@ class MASB(object):
             self.detect_planar = (math.pi/180)*detect_planar
 
     def compute_balls(self):
-        for inner in ['in', 'out']:
+        for inner in [True, False]:
             self.compute_balls_oneside(inner)
 
     def compute_balls_oneside(self, inner=True):
