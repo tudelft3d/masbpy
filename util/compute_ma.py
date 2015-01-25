@@ -42,7 +42,7 @@ def main(args):
     
     # compute interior and exterior MAT
     ma = MASB(datadict, args.radius, denoise=args.denoise, detect_planar=args.planar)
-    ma.compute_mp()
+    ma.compute_balls()
 
     if args.lfs:
         compute_lfs(datadict)
