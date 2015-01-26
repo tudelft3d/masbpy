@@ -114,10 +114,8 @@ class MASB(object):
                 ### FINDING NEAREST NEIGHBOR OF c
 
                 # find closest point to c and assign to q
-                if HAS_PYKD:
-                    dists, indices = self.pykdtree.query(np.array([c]), k=2)
-                elif HAS_FLANN:
-                    indices, dists = self.pyflann.nn_index(c, 2)
+
+                dists, indices = self.pykdtree.query(np.array([c]), k=2)
 
                 try:
                     candidate_c = self.D['coords'][indices]

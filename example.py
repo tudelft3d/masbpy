@@ -27,7 +27,7 @@ def main():
     
     # compute interior and exterior MAT
     ma = MASB(datadict, 10)
-    ma.compute_balls
+    ma.compute_balls()
 
     # write MA points to file
     io_npy.write_npy('house_dyke_tree_npy', datadict)
