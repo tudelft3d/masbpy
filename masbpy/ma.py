@@ -22,7 +22,7 @@ from pykdtree.kdtree import KDTree
 # with numba we get significant speedups
 try: 
     import numba
-    from algebra import norm, dot, equal, compute_radius, cos_angle
+    from algebra_numba import norm, dot, equal, compute_radius, cos_angle
 except:
     from algebra import norm, dot, equal, compute_radius, cos_angle
 
