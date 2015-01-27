@@ -16,7 +16,7 @@
 # Copyright 2015 Ravi Peters
 
 import sys, argparse
-from masbpy.ma_fast import MASB
+from masbpy.ma_mp import MASB
 from masbpy import io_ply, io_npy
 
 def compute_lfs(datadict, k=10):
