@@ -15,6 +15,8 @@
 
 # Copyright 2015 Ravi Peters
 
+#!/usr/bin/env python
+
 import sys, argparse
 from masbpy.ma_mp import MASB
 from masbpy import io_ply, io_npy
@@ -38,13 +40,17 @@ def main(args):
     if args.infile.endswith('ply'):
         datadict = io_ply.read_ply(args.infile)
     elif args.infile.endswith('npy'):
-        datadict = io_npy.read_npy(args.infile, ['coords', 'normals'])
+        if args.ma:
+            datadict = io_npy.read_npy(args.infile, ['coords', 'normals'])
+        else:
+            datadict = io_npy.read_npy(args.infile, ['coords', 'ma_coords_in', 'ma_coords_out'])
     
     # compute interior and exterior MAT
-    ma = MASB(datadict, args.radius, denoise=args.denoise, detect_planar=args.planar)
-    ma.compute_balls()
+    if args.ma:
+        ma = MASB(datadict, args.radius, denoise=args.denoise, detect_planar=args.planar)
+        ma.compute_balls()
 
-    if args.lfs:
+    if args.lfs or not args.ma:
         compute_lfs(datadict)
 
     io_npy.write_npy(args.outfile, datadict)
@@ -54,10 +60,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute MAT and LFS')
     parser.add_argument('infile', help='Input .ply, _npy')
     parser.add_argument('outfile', help='Output _npy')
-    parser.add_argument('--without_lfs', help='Don\'t compute LFS', dest='lfs', action='store_false')
+    parser.add_argument('--noma', help='Don\'t compute MAT', dest='ma', action='store_false')
+    parser.set_defaults(ma=True)
+    parser.add_argument('--with-lfs', help='Don\'t compute LFS', dest='lfs', action='store_true')
     parser.set_defaults(lfs=False)
     parser.add_argument('-r', '--radius', help='initial ball radius', default=200, type=float)
-    parser.add_argument('-d', '--denoise', help='denoising parameter', default=40, type=float)
+    parser.add_argument('-d', '--denoise', help='denoising parameter', default=20, type=float)
     parser.add_argument('-p', '--planar', help='planarity parameter', default=75, type=float)
 
     args = parser.parse_args()

@@ -15,6 +15,8 @@
 
 # Copyright 2015 Ravi Peters
 
+#!/usr/bin/env python
+
 from sklearn.decomposition import PCA
 from pykdtree.kdtree import KDTree
 from multiprocessing import Pool

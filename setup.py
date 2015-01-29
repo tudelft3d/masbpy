@@ -7,5 +7,6 @@ setup(
     extras_require = {
         'LAS':  ["laspy"],
         'numba': ["numba"],
-    }
+    },
+    scripts = ['util/compute_ma.py', 'util/compute_normals.py']
 )
