@@ -75,9 +75,10 @@ class MASB(object):
         """Balls shrinking algorithm. Set `inner` to False when outer balls are wanted."""
 
         # iterate over all point-normal pairs
-        for p_i, pn in enumerate(zip(self.D['coords'], self.D['normals'])):
+        for p_i in xrange(self.m):
+            p, n = self.D['coords'][p_i], self.D['normals'][p_i]
             #-- p is the point along whose normal n we are shrinking a ball, its index is p_i
-            p, n = pn
+            
             if not inner:
                 n = -n
             
