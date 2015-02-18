@@ -1,4 +1,4 @@
-from masbpy.ma_fast import MASB
+from masbpy.ma_mp import MASB
 from masbpy import io_ply
 from masbpy.write import write_coords_filtered, write_coords_lfs_colored, write_ma_coords
 
