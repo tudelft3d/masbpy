@@ -9,6 +9,10 @@ $ git clone https://github.com/tudelft3d/masbpy.git
 $ cd masbpy
 $ python setup.py install
 ```
+or simply
+```
+$ pip install git+https://github.com/tudelft3d/masbpy.git
+```
 This should automatically install all required dependencies. 
 
 Minimal dependencies:
