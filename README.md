@@ -1,5 +1,7 @@
 # masbpy
-masbpy is a python implementation of the shrinking ball algortihm to approximate the Medial Axis Transform (MAT) of an oriented point cloud. It is being developed in support of the [3DSM project](http://3dgeoinfo.bk.tudelft.nl/projects/3dsm/) that aims to explore possible applications of the MAT for GIS point clouds (e.g. from airborne LiDAR). To deal with noisy input data a noise-handling mechanism is built-in.
+masbpy is a python implementation of the shrinking ball algorithm to approximate the Medial Axis Transform (MAT) of an oriented point cloud. It is being developed in support of the [3DSM project](http://3dgeoinfo.bk.tudelft.nl/projects/3dsm/) that aims to explore possible applications of the MAT for GIS point clouds (e.g. from airborne [LiDAR](http://en.wikipedia.org/wiki/Lidar)). To deal with noisy input data a noise-handling mechanism is built-in.
+
+[This video](https://vimeo.com/84859998) demonstrates how the shrinking ball algorithm works using an early version of masbpy.
 
 ## Installation
 Succesfull installations have been reported for both Linux and Mac OS X platforms. Installation should be as simple as
@@ -27,7 +29,7 @@ Optional dependecies:
 ## Usage
 Provided is an example script `example.py` that demonstrate how to use this library to approximate the MAT of an example dataset that is also provided. The easiest way to get started however, is to use the provided `compute_ma.py` utility.
 
-Supported input formats are currently: `_npy`, `.ply` and `.las` (if laspy is installed). Note that normals must be present, if this is not the case these can be computed using the provided `compute_normals.py` utility.
+Supported input formats are currently: `_npy`, `.ply` and `.las` (if laspy is installed). Note that point normals must be present, if this is not the case these can be approximated using the provided `compute_normals.py` utility.
 
 Internally masbpy uses numpy arays. These can be conveniently stored as binary files, which is also the fastest way to read and write input and output with masbpy. It is actually also the only way to store masbpy outputs now. To use this format append `_npy` to you in- and output specifiers.
 
