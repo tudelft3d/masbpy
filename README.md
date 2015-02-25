@@ -25,7 +25,7 @@ Provided is an example script `example.py` that demonstrate how to use this libr
 
 Supported input formats are currently: `_npy`, `.ply` and `.las` (if laspy is installed). Note that normals must be present, if this is not the case these can be computed using the provided `compute_normals.py` utility.
 
-Internally masbpy uses numpy arays. These can be conveniently stored as binary files, which is also the fastest way to read and write input and output with masbpy. It is actually also the only way to store masbpy outputs now. To use this format append `_npy` to you in -and output specifiers.
+Internally masbpy uses numpy arays. These can be conveniently stored as binary files, which is also the fastest way to read and write input and output with masbpy. It is actually also the only way to store masbpy outputs now. To use this format append `_npy` to you in- and output specifiers.
 
 For example this is how to approximate the MAT from a LAS file.
 
@@ -33,7 +33,7 @@ For example this is how to approximate the MAT from a LAS file.
 $ compute_normals.py my_data.las my_data_npy
 $ compute_ma.py my_data_npy my_data_npy
 ```
-You will now have a directory `my_data_npy` with a number of `.npy` files that each correspond to a numpy array. Most notably are `ma_coords_in.npy` and `ma_coords_out.npy`; these contain the approximate MAT points. You can access these as follows from a python shell:
+You will now have a directory `my_data_npy` with a number of `.npy` files that each correspond to a numpy array. Most notably are `ma_coords_in.npy` and `ma_coords_out.npy`; these contain the in- and exterior approximate MAT points. You can access these as follows from a python shell:
 
 ```
 > from masbpy import io_npy
@@ -47,6 +47,9 @@ array([[ 4.66304016,  6.7078476 , -0.62416261],
        [ 1.80165005,  0.89763576,  0.92685151],
        [-0.90879714, -0.8976357 ,  0.92685151]], dtype=float32)
 ```
+
+## Limitations
+The current implementation is not infinitely scalable, mainly in terms of memory usage. Processing very large datasets (hundreds of millions of points or more) is therefore not really supported. 
 
 ## Acknowledgements
 The shinking ball algorithm was originally introduced by [ma12]
