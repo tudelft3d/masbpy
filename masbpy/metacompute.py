@@ -15,12 +15,41 @@
 
 # Copyright 2015 Ravi Peters
 
+from multiprocessing import Pool
 import numpy as np
 try: 
     import numba
     from algebra_numba import norm, dot, equal, compute_radius, cos_angle
 except:
     from algebra import norm, dot, equal, compute_radius, cos_angle
+
+
+def compute_normal(neighbours):
+    pca = PCA(n_components=3)
+    pca.fit(neighbours)
+    plane_normal = pca.components_[-1] # this is a normalized normal
+    # make all normals point upwards:
+    if plane_normal[-1] < 0:
+        plane_normal *= -1
+    return plane_normal
+
+def compute_surface_variation(datadict, k=10):
+    from pykdtree.kdtree import KDTree
+    from sklearn.decomposition import PCA
+
+    def f(neighbours):
+        pca = PCA(n_components=3)
+        pca.fit(neighbours)
+        return pca.components_[-1]/(pca.components_[0]+pca.components_[1]+pca.components_[2]) # this is a normalized normal
+    
+
+    pykdtree = KDTree(coords)
+    neighbours = kd_tree.query( datadict['coords'], k+1 )[1]
+    neighbours = datadict['coords'][neighbours]
+    
+    p = Pool()
+    result = p.map(f, neighbours)
+    D['surfvar'] = np.array(result, dtype=np.float32)
 
 
 def compute_lfs(datadict, k=10):
