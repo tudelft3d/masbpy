@@ -1,5 +1,5 @@
 # masbpy
-masbpy is a python implementation of the shrinking ball algortihm to approximate the Medial Axis Transform (MAT) of an oriented point cloud. It is being developed in support of the (3DSM project)[http://3dgeoinfo.bk.tudelft.nl/projects/3dsm/] that aims to explore possible applications of the MAT for GIS point clouds (e.g. from airborne LiDAR). To deal with noisy input data a noise-handling mechanism is built-in.
+masbpy is a python implementation of the shrinking ball algortihm to approximate the Medial Axis Transform (MAT) of an oriented point cloud. It is being developed in support of the [3DSM project](http://3dgeoinfo.bk.tudelft.nl/projects/3dsm/) that aims to explore possible applications of the MAT for GIS point clouds (e.g. from airborne LiDAR). To deal with noisy input data a noise-handling mechanism is built-in.
 
 ## Installation
 Succesfull installations have been reported for both Linux and Mac OS X platforms. Installation should be as simple as
