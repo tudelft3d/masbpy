@@ -19,22 +19,8 @@
 
 import sys, argparse
 from masbpy.ma_mp import MASB
-from masbpy import io_ply, io_npy
+from masbpy import io_ply, io_npy, metacompute
 
-def compute_lfs(datadict, k=10):
-    import numpy as np
-    from pykdtree.kdtree import KDTree
-
-    # collect all ma_coords that are not NaN
-    ma_coords = np.concatenate([datadict['ma_coords_in'], datadict['ma_coords_out']])
-    ma_coords = ma_coords[~np.isnan(ma_coords).any(axis=1)]
-
-    # build kd-tree of ma_coords to compute lfs
-    pykdtree = KDTree(ma_coords)
-    if k > 1:
-        datadict['lfs'] = np.sqrt(np.median(pykdtree.query(datadict['coords'], k)[0], axis=1))
-    else:
-        datadict['lfs'] = np.sqrt(pykdtree.query(datadict['coords'], k)[0])
 
 def main(args):
     if args.infile.endswith('ply'):
@@ -51,7 +37,7 @@ def main(args):
         ma.compute_balls()
 
     if args.lfs or not args.ma:
-        compute_lfs(datadict)
+        metacompute.compute_lfs(datadict)
 
     io_npy.write_npy(args.outfile, datadict)
 
