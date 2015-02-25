@@ -24,15 +24,6 @@ except:
     from algebra import norm, dot, equal, compute_radius, cos_angle
 
 
-def compute_normal(neighbours):
-    pca = PCA(n_components=3)
-    pca.fit(neighbours)
-    plane_normal = pca.components_[-1] # this is a normalized normal
-    # make all normals point upwards:
-    if plane_normal[-1] < 0:
-        plane_normal *= -1
-    return plane_normal
-
 def compute_surface_variation(datadict, k=10):
     from pykdtree.kdtree import KDTree
     from sklearn.decomposition import PCA
