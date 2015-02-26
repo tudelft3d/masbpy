@@ -23,11 +23,15 @@ def write_npy(dir, datadict, keys=None):
 	    os.makedirs(dir)
 
 	for key,val in datadict.items():
-		fname = os.path.join(dir,key)
-		np.save(fname, val)
+		if key in keys or keys == None:
+			fname = os.path.join(dir,key)
+			np.save(fname, val)
 
-def read_npy(dir, keys):
+def read_npy(dir, keys=None):
 	assert os.path.exists(dir)
+
+	if keys == None:
+		keys = inspect_npy(dir)
 
 	datadict = {}	
 	for key in keys:
