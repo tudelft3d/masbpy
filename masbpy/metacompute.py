@@ -23,27 +23,26 @@ try:
 except:
     from algebra import norm, dot, equal, compute_radius, cos_angle
 
+from sklearn.decomposition import PCA
+def f(neighbours):
+    pca = PCA(n_components=3)
+    pca.fit(neighbours)
+    return pca.explained_variance_ratio_
+    # return pca.components_[-1]/(pca.components_[0]+pca.components_[1]+pca.components_[2])
 
 def compute_surface_variation(datadict, k=10):
     from pykdtree.kdtree import KDTree
-    from sklearn.decomposition import PCA
 
-    def f(neighbours):
-        pca = PCA(n_components=3)
-        pca.fit(neighbours)
-        return pca.components_[-1]/(pca.components_[0]+pca.components_[1]+pca.components_[2]) # this is a normalized normal
-    
-
-    pykdtree = KDTree(coords)
+    kd_tree = KDTree(datadict['coords'])
     neighbours = kd_tree.query( datadict['coords'], k+1 )[1]
     neighbours = datadict['coords'][neighbours]
     
     p = Pool()
     result = p.map(f, neighbours)
-    D['surfvar'] = np.array(result, dtype=np.float32)
+    datadict['surfvar'] = np.array(result, dtype=np.float32)
 
 
-def compute_lfs(datadict, k=10):
+def compute_lfs(datadict, key='lfs', k=10):
     from pykdtree.kdtree import KDTree
 
     # collect all ma_coords that are not NaN
@@ -53,9 +52,9 @@ def compute_lfs(datadict, k=10):
     # build kd-tree of ma_coords to compute lfs
     pykdtree = KDTree(ma_coords)
     if k > 1:
-        datadict['lfs'] = np.sqrt(np.median(pykdtree.query(datadict['coords'], k)[0], axis=1))
+        datadict[key] = np.sqrt(np.median(pykdtree.query(datadict['coords'], k)[0], axis=1))
     else:
-        datadict['lfs'] = np.sqrt(pykdtree.query(datadict['coords'], k)[0])
+        datadict[key] = np.sqrt(pykdtree.query(datadict['coords'], k)[0])
 
 def compute_lam(D, inner='in'):
     '''Compute for every boundary point p, corresponding ma point m, and other feature point p_ the distance p-p_ '''
