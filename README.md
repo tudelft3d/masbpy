@@ -39,7 +39,7 @@ For example this is how to approximate the MAT from a LAS file.
 $ compute_normals.py my_data.las my_data_npy
 $ compute_ma.py my_data_npy my_data_npy
 ```
-You will now have a directory `my_data_npy` with a number of `.npy` files that each correspond to a numpy array. Most notably are `ma_coords_in.npy` and `ma_coords_out.npy`; these contain the in- and exterior approximate MAT points. You can access these as follows from a python shell:
+You will now have a directory `my_data_npy` with a number of `.npy` files that each correspond to a numpy array. Most notable are `ma_coords_in.npy` and `ma_coords_out.npy`; these contain the in- and exterior approximate MAT points. You can access these as follows from a python shell:
 
 ```
 > from masbpy import io_npy
