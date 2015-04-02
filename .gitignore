@@ -1,0 +1,11 @@
+build
+dist
+house_dyke_tree_npy
+masbpy.egg-info
+masbpy/__init__.pyc
+masbpy/algebra.pyc
+masbpy/io_npy.pyc
+masbpy/io_ply.pyc
+masbpy/ma.pyc
+util/my_data_npy
+util/out
