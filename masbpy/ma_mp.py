@@ -38,7 +38,10 @@ class MASB(object):
         self.D = datadict # dict of numpy arrays
         self.m, self.n = datadict['coords'].shape
 
-        self.kd_tree = KDTree(self.D['coords'])
+        if datadict.has_key('coords_in_buffer'):
+            self.kd_tree = KDTree(concatenate([self.D['coords'], self.D['coords_in_buffer']]))
+        else:
+            self.kd_tree = KDTree(self.D['coords'])
 
         self.SuperR = max_r
         self.denoise = denoise
