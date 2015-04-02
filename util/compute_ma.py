@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('outfile', help='Output _npy')
     parser.add_argument('--noma', help='Don\'t compute MAT', dest='ma', action='store_false')
     parser.set_defaults(ma=True)
-    parser.add_argument('--with-lfs', help='Don\'t compute LFS', dest='lfs', action='store_true')
+    parser.add_argument('--with-lfs', help='Also compute LFS', dest='lfs', action='store_true')
     parser.set_defaults(lfs=False)
     parser.add_argument('-r', '--radius', help='initial ball radius', default=200, type=float)
     parser.add_argument('-d', '--denoise', help='denoising parameter', default=20, type=float)

@@ -18,16 +18,20 @@
 import os
 import numpy as np
 
-def write_npy(dir, datadict, keys=None):
+def write_npy(dir, datadict, keys=[]):
 	if not os.path.exists(dir):
 	    os.makedirs(dir)
 
 	for key,val in datadict.items():
-		fname = os.path.join(dir,key)
-		np.save(fname, val)
+		if key in keys or len(keys)==0:
+			fname = os.path.join(dir,key)
+			np.save(fname, val)
 
-def read_npy(dir, keys):
+def read_npy(dir, keys=[]):
 	assert os.path.exists(dir)
+
+	if len(keys)==0:
+		keys = inspect_npy(dir)
 
 	datadict = {}	
 	for key in keys:
