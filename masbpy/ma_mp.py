@@ -25,7 +25,12 @@ from pykdtree.kdtree import KDTree
 from multiprocessing import Process, Pool, cpu_count, Manager
 from multiprocessing.queues import Queue
 
-from algebra_numba import norm, dot, equal, proj, compute_radius, cos_angle
+try: 
+    import numba
+    from algebra_numba import norm, dot, equal, compute_radius, cos_angle
+except:
+    from algebra import norm, dot, equal, compute_radius, cos_angle
+
 import math
 
 from time import time
