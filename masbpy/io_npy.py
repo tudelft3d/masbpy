@@ -43,4 +43,4 @@ def read_npy(dir, keys=[]):
 def inspect_npy(dir):
 	from glob import glob
 	dir = os.path.join(dir,'*')
-	return [os.path.split(f)[-1].split('.')[0] for f in glob(dir)]
+	return [os.path.split(f)[-1][:-4] for f in glob(dir)]
