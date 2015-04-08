@@ -43,8 +43,9 @@ class MASB(object):
         self.D = datadict # dict of numpy arrays
         self.m, self.n = datadict['coords'].shape
 
+        self.coords_with_buffer = concatenate([self.D['coords'], self.D['coords_in_buffer']])
         if datadict.has_key('coords_in_buffer'):
-            self.kd_tree = KDTree(concatenate([self.D['coords'], self.D['coords_in_buffer']]))
+            self.kd_tree = KDTree(self.coords_with_buffer)
         else:
             self.kd_tree = KDTree(self.D['coords'])
 
@@ -138,6 +139,8 @@ class MASB(object):
             p, n = self.D['coords'][pi], self.D['normals'][pi]
             # print "for", p, n
 
+            if np.isnan(n[0]):
+                continue
             if not inner:
                 n = -n
                         
@@ -174,11 +177,12 @@ class MASB(object):
 
                 # find closest point to c and assign to q
                 dists, results = self.kd_tree.query(array([c]), k=2)
-                candidate_c = self.D['coords'][results]
+                candidate_c = self.coords_with_buffer[results]
                 q = candidate_c[0][0]
                 q_i = results[0][0]
 
                 # What to do if closest point is p itself?
+                # import ipdb; ipdb.set_trace()
                 if equal(q,p):
                     # 1) if r==SuperR, apparantly no other points on the halfspace spanned by -n => that's an infinite ball
                     if r == self.SuperR: break
@@ -204,6 +208,7 @@ class MASB(object):
                 if verbose: print 'current ball: ' + str(i) +' - ' + str(r_)
 
                 c_ = p - n*r_
+                # import ipdb; ipdb.set_trace()
                 if self.denoise != None:
                     if math.acos(cos_angle(p-c, q-c)) < self.denoise and j>0 and r_>norm(q-p):
                         r_=r
