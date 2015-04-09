@@ -42,7 +42,10 @@ def cos_angle(p, q):
     """Calculate the cosine of angle between vector p and q
     see http://en.wikipedia.org/wiki/Law_of_cosines#Vector_formulation
     """
-    return p.dot(q) / ( norm(p) * norm(q) )
+    cos_angle = p.dot(q) / ( norm(p) * norm(q) )
+    if cos_angle > 1: return 1
+    elif cos_angle < -1: return -1
+    return cos_angle
 
 def compute_radius(p, p_n, q):
     """compute radius of ball that touches points p and q and is centered on along the normal p_n of p. Numpy array inputs."""

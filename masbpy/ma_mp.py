@@ -27,7 +27,7 @@ from multiprocessing.queues import Queue
 
 try: 
     import numba
-    from algebra_numba import norm, dot, equal, compute_radius, cos_angle
+    from algebra import norm, dot, equal, compute_radius, cos_angle
 except:
     from algebra import norm, dot, equal, compute_radius, cos_angle
 
@@ -177,15 +177,22 @@ class MASB(object):
 
                 # find closest point to c and assign to q
                 dists, results = self.kd_tree.query(array([c]), k=2)
-                candidate_c = self.coords_with_buffer[results]
+                try:
+                    candidate_c = self.coords_with_buffer[results]
+                except IndexError:
+                    import ipdb; ipdb.set_trace()
                 q = candidate_c[0][0]
                 q_i = results[0][0]
+
+                # if i==64849:
+                #     import ipdb; ipdb.set_trace()
 
                 # What to do if closest point is p itself?
                 # import ipdb; ipdb.set_trace()
                 if equal(q,p):
                     # 1) if r==SuperR, apparantly no other points on the halfspace spanned by -n => that's an infinite ball
                     if r == self.SuperR: break
+                    elif equal(candidate_c[0][0], candidate_c[0][1]): break
                     # 2) otherwise just pick the second closest point
                     else: 
                         q = candidate_c[0][1]
@@ -210,9 +217,12 @@ class MASB(object):
                 c_ = p - n*r_
                 # import ipdb; ipdb.set_trace()
                 if self.denoise != None:
-                    if math.acos(cos_angle(p-c, q-c)) < self.denoise and j>0 and r_>norm(q-p):
-                        r_=r
-                        break
+                    try: 
+                        if math.acos(cos_angle(p-c, q-c)) < self.denoise and j>0 and r_>norm(q-p):
+                            r_=r
+                            break
+                    except ValueError:
+                        import ipdb; ipdb.set_trace()
 
                 if self.denoise_delta != None and j>0:
                     theta_now = math.acos(cos_angle(p-c_, q-c_))

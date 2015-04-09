@@ -16,7 +16,7 @@
 # Copyright 2015 Ravi Peters
 
 import math
-from numba import jit
+from numba import jit, b1, float32
 
 # numba based operations for 3D vectors only
 

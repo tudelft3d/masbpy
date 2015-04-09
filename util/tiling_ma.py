@@ -41,7 +41,7 @@ for las_file_path in las_tiles:
 	datadict['coords_in_buffer'] = np.column_stack([ np.array(a[~inside_mask], dtype=np.float32) for a in [las_file.x-center_x, las_file.y-center_y, las_file.z] ])
 
 	# creat MASB object, so that also KDtree gets created
-	ma = MASB(datadict, max_r=buf, denoise=20, detect_planar=75)
+	ma = MASB(datadict, max_r=buf, denoise=None, detect_planar=None)
 
 	# compute normals
 	t1 = time()
@@ -55,6 +55,9 @@ for las_file_path in las_tiles:
 	io_npy.write_npy(npy_file_path, datadict)
 
 	# compute ma
-	ma.compute_sp()
+	ma.compute_balls()
 
 	io_npy.write_npy(npy_file_path, datadict)
+
+	del datadict
+	del ma

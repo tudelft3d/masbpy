@@ -51,8 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('--with-lfs', help='Also compute LFS', dest='lfs', action='store_true')
     parser.set_defaults(lfs=False)
     parser.add_argument('-r', '--radius', help='initial ball radius', default=200, type=float)
-    parser.add_argument('-d', '--denoise', help='denoising parameter', default=20, type=float)
-    parser.add_argument('-p', '--planar', help='planarity parameter', default=75, type=float)
+    parser.add_argument('-d', '--denoise', help='denoising parameter', default=None, type=float)
+    parser.add_argument('-p', '--planar', help='planarity parameter', default=None, type=float)
 
     args = parser.parse_args()
     main(args)
