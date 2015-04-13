@@ -25,11 +25,7 @@ from pykdtree.kdtree import KDTree
 from multiprocessing import Process, Pool, cpu_count, Manager
 from multiprocessing.queues import Queue
 
-try: 
-    import numba
-    from algebra import norm, dot, equal, compute_radius, cos_angle
-except:
-    from algebra import norm, dot, equal, compute_radius, cos_angle
+from algebra import norm, equal, compute_radius, cos_angle
 
 import math
 
@@ -37,15 +33,15 @@ from time import time
 
 class MASB(object):
 
-    def __init__(self, datadict, max_r, denoise=None, denoise_delta=None, detect_planar=None):
+    def __init__(self, datadict, max_r, denoise=None, denoise_delta=None, detect_planar=None, coord_inside_count=None):
 
         self.manager = Manager()
         self.D = datadict # dict of numpy arrays
         self.m, self.n = datadict['coords'].shape
 
-        self.coords_with_buffer = concatenate([self.D['coords'], self.D['coords_in_buffer']])
-        if datadict.has_key('coords_in_buffer'):
-            self.kd_tree = KDTree(self.coords_with_buffer)
+        if coord_inside_count != None:
+            self.kd_tree = KDTree(self.D['coords'][:coord_inside_count,:])
+            self.coord_inside_count = coord_inside_count
         else:
             self.kd_tree = KDTree(self.D['coords'])
 
@@ -57,13 +53,13 @@ class MASB(object):
     def compute_sp(self):
         from Queue import Queue
         queue = Queue()
-        datalen = len(self.D['coords'])
+        datalen = self.coord_inside_count
         self(queue,0,datalen, True, False)
         self(queue,0,datalen, False, False)
         return queue.get() + queue.get()
 
     def compute_balls(self, num_processes=cpu_count()):
-        datalen = len(self.D['coords'])
+        datalen = self.coord_inside_count
         
         n = num_processes/2 # we are spawning 2 processes (inner and outer ma) per n
         batchsize = datalen/n
@@ -91,11 +87,10 @@ class MASB(object):
             p2.start()
             jobs.append(p2)
         
-        result = []
         for j in jobs:
             j.join()
-            res = queue.get()
-            result.append(res)
+
+        result = [queue.get() for j in jobs]
 
         t2 = time()
 
@@ -125,7 +120,7 @@ class MASB(object):
         ma_coords[:] = nan
         # ma_radii = zeros(m)
         # ma_radii[:] = nan
-        ma_f2 = zeros(m, dtype=np.uint32)
+        ma_f2 = zeros(m, dtype=np.uint64)
         ma_f2[:] = nan
         if self.denoise != None:
             self.denoise = (math.pi/180)*self.denoise
@@ -134,7 +129,6 @@ class MASB(object):
         if self.detect_planar != None:
             self.detect_planar = (math.pi/180)*self.detect_planar
         # q_history_list = []
-        ZeroDivisionError_cnt = 0
         for i, pi in enumerate(xrange(start,end)):
             p, n = self.D['coords'][pi], self.D['normals'][pi]
             # print "for", p, n
@@ -177,10 +171,7 @@ class MASB(object):
 
                 # find closest point to c and assign to q
                 dists, results = self.kd_tree.query(array([c]), k=2)
-                try:
-                    candidate_c = self.coords_with_buffer[results]
-                except IndexError:
-                    import ipdb; ipdb.set_trace()
+                candidate_c = self.D['coords'][results]
                 q = candidate_c[0][0]
                 q_i = results[0][0]
 
@@ -200,11 +191,7 @@ class MASB(object):
                 
                 # q_history.append(q_i)
                 # compute new candidate radius r_
-                try:
-                    r_ = compute_radius(p,n,q)
-                except ZeroDivisionError:
-                    ZeroDivisionError_cnt += 1
-                    r_ = self.SuperR+1
+                r_ = compute_radius(p,n,q)
 
                 # if r_ < 0 closest point was on the wrong side of plane with normal n => start over with SuperRadius on the right side of that plance
                 if r_ < 0.: r_ = self.SuperR
@@ -215,15 +202,12 @@ class MASB(object):
                 if verbose: print 'current ball: ' + str(i) +' - ' + str(r_)
 
                 c_ = p - n*r_
-                # import ipdb; ipdb.set_trace()
-                if self.denoise != None:
-                    try: 
-                        if math.acos(cos_angle(p-c, q-c)) < self.denoise and j>0 and r_>norm(q-p):
-                            r_=r
-                            break
-                    except ValueError:
-                        import ipdb; ipdb.set_trace()
 
+                if self.denoise != None:
+                    if math.acos(cos_angle(p-c_, q-c_)) < self.denoise and j>0 and r_>norm(q-p):
+                        r_=r
+                        break
+                    
                 if self.denoise_delta != None and j>0:
                     theta_now = math.acos(cos_angle(p-c_, q-c_))
                     q_previous = self.D['coords'][q_i_previous]
@@ -260,5 +244,5 @@ class MASB(object):
         result = ( start, inner, ma_coords, ma_f2 )
         queue.put( result )
 
-        print '{} ZeroDivisionErrors'.format(ZeroDivisionError_cnt)
-        print "done!", start, inner, "len:", ma_coords.shape
+        # print "done!", start, inner, "len:", ma_coords.shape
+        return
