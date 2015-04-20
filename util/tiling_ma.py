@@ -7,16 +7,17 @@ import logging
 import laspy
 import numpy as np
 from masbpy.ma_mp import MASB
-from masbpy import io_npy
+from masbpy import io_npy, metacompute
 
 from sklearn.decomposition import PCA
 
-las_tiles = glob.glob('/Volumes/HFS2000/rdam2012_part/*.las')
-tile_size = 150
-buf = 50
+las_tiles = glob.glob('/Volumes/HFS2000/*.las')
+tile_size = 750
+buf = 100
 k = 10
+skip_some_tiles = 0
 
-logging.basicConfig(filename='./tiling_ma.log',level=logging.INFO)
+logging.basicConfig(filename='./tiling_ma_CA.log',level=logging.INFO)
 logging.basicConfig(format='%(asctime)s %(message)s')
 
 
@@ -29,7 +30,7 @@ def compute_normal(neighbours):
 		plane_normal *= -1
 	return plane_normal
 
-for las_file_path in las_tiles:
+for las_file_path in las_tiles[skip_some_tiles:]:
 	t_start = time()
 	npy_file_path = las_file_path[:-4]+'_npy'
 	logging.info('{} Starting with file {}'.format(datetime.now().isoformat(), npy_file_path))
@@ -52,7 +53,11 @@ for las_file_path in las_tiles:
 	y_inside_mask = np.logical_and(np.greater(las_file.y, bb_min[1]), np.less(las_file.y, bb_max[1]))
 	inside_mask = np.logical_and(x_inside_mask, y_inside_mask)
 	coord_inside_count = inside_mask.sum()
-
+	
+	if coord_inside_count == 0:
+		logging.warning("skipping {}, too few points".format(las_file_path))
+		continue
+	
 	datadict = {}
 	datadict['coords'] = np.concatenate([ 
 		np.column_stack([ np.array(a[inside_mask], dtype=np.float32) for a in [las_file.x-center_x, las_file.y-center_y, las_file.z] ]),
@@ -93,6 +98,11 @@ for las_file_path in las_tiles:
 	datadict['ma_coords_out'] += np.array([center_x, center_y, 0])
 
 	io_npy.write_npy(npy_file_path, datadict)
+
+	t_start_lfs = time()
+	metacompute.compute_lfs(datadict)
+	t_stop_lfs = time()
+	logging.info("finished LFS computation in {} s".format(t_stop_lfs-t_start_lfs))
 
 	del datadict
 	del ma
