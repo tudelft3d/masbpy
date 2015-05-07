@@ -15,6 +15,8 @@
 
 # Copyright 2015 Ravi Peters
 
+from multiprocessing import Pool
+from pykdtree.kdtree import KDTree
 import numpy as np
 try: 
     import numba
@@ -22,20 +24,69 @@ try:
 except:
     from algebra import norm, dot, equal, compute_radius, cos_angle
 
+from sklearn.decomposition import PCA
+def f_surfvar(neighbours):
+    pca = PCA(n_components=3)
+    pca.fit(neighbours)
+    return pca.explained_variance_ratio_
+    # return pca.components_[-1]/(pca.components_[0]+pca.components_[1]+pca.components_[2])
 
-def compute_lfs(datadict, k=10):
-    from pykdtree.kdtree import KDTree
+def compute_surface_variation(datadict, k=10):
+    kd_tree = KDTree(datadict['coords'])
+    neighbours = kd_tree.query( datadict['coords'], k+1 )[1]
+    neighbours = datadict['coords'][neighbours]
+    
+    p = Pool()
+    result = p.map(f_surfvar, neighbours)
+    datadict['surfvar'] = np.array(result, dtype=np.float32)
 
-    # collect all ma_coords that are not NaN
-    ma_coords = np.concatenate([datadict['ma_coords_in'], datadict['ma_coords_out']])
+def f_planefitcrit(neighbours):
+    # see Point Based Graphics book page 196
+    pca = PCA(n_components=3)
+    pca.fit(neighbours[1:])
+    plane_normal = pca.components_[-1] # this is a normalized normal
+    mean = np.mean(neighbours[1:], axis=0)
+    p = neighbours[0]
+    d = abs((p-mean).dot(plane_normal))
+    # note that we might want to normalize d using the mean distance to the fitted plane
+    return d
+
+def f_mediandistcrit(neighbours):
+    dists = np.sqrt(np.sum((neighbours[0] - neighbours[1:])**2, axis=1))
+    return np.mean(dists)
+
+
+def compute_planefitcrit(datadict, onkey, key, k=10):
+    nanmask = ~np.isnan(datadict[onkey]).any(axis=1)
+    points = datadict[onkey][nanmask]
+    kd_tree = KDTree(points)
+    neighbours = kd_tree.query( points, k+1 )[1]
+    neighbours = points[neighbours]
+    
+    p = Pool()
+    result = p.map(f_mediandistcrit, neighbours)
+    datadict[key] = np.empty(nanmask.shape, dtype=np.float32)
+    datadict[key][:] = np.nan
+    datadict[key][nanmask] = np.array(result, dtype=np.float32)
+    p.close()
+
+
+def compute_lfs(datadict, masks=(None, None), key='lfs', k=10):
+
+    # mask with optional filter arrays and collect all ma_coords that are not NaN
+    mask_in, mask_out = masks
+    if mask_in is None: mask_in = np.ones(datadict['coords'].shape[0]).astype(bool)
+    if mask_out is None: mask_out = np.ones(datadict['coords'].shape[0]).astype(bool)
+
+    ma_coords = np.concatenate([datadict['ma_coords_in'][mask_in], datadict['ma_coords_out'][mask_out]])
     ma_coords = ma_coords[~np.isnan(ma_coords).any(axis=1)]
 
     # build kd-tree of ma_coords to compute lfs
     pykdtree = KDTree(ma_coords)
     if k > 1:
-        datadict['lfs'] = np.sqrt(np.median(pykdtree.query(datadict['coords'], k)[0], axis=1))
+        datadict[key] = np.sqrt(np.median(pykdtree.query(datadict['coords'], k)[0], axis=1))
     else:
-        datadict['lfs'] = np.sqrt(pykdtree.query(datadict['coords'], k)[0])
+        datadict[key] = np.sqrt(pykdtree.query(datadict['coords'], k)[0])
 
 def compute_lam(D, inner='in'):
     '''Compute for every boundary point p, corresponding ma point m, and other feature point p_ the distance p-p_ '''

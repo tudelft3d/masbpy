@@ -11,7 +11,10 @@ from masbpy import io_npy, metacompute
 
 from sklearn.decomposition import PCA
 
-las_tiles = glob.glob('/Volumes/HFS2000/*.las')
+# las_tiles = glob.glob('/Volumes/HFS2000/*.las')
+las_tiles = glob.glob('/Volumes/HFS2000/CA_pressure_ridge/CA_pressure_ridge_tile_*.las')
+mode = ''
+
 tile_size = 750
 buf = 100
 k = 10
@@ -32,7 +35,7 @@ def compute_normal(neighbours):
 
 for las_file_path in las_tiles[skip_some_tiles:]:
 	t_start = time()
-	npy_file_path = las_file_path[:-4]+'_npy'
+	npy_file_path = las_file_path[:-4]+mode+'_npy'
 	logging.info('{} Starting with file {}'.format(datetime.now().isoformat(), npy_file_path))
 
 	las_file = laspy.file.File(las_file_path)
@@ -69,7 +72,7 @@ for las_file_path in las_tiles[skip_some_tiles:]:
 
 	# import ipdb; ipdb.set_trace()
 	# creat MASB object, so that also KDtree gets created
-	ma = MASB(datadict, max_r=buf, denoise=20, detect_planar=70, coord_inside_count=coord_inside_count)
+	ma = MASB(datadict, max_r=buf, denoise=35, detect_planar=65, coord_inside_count=coord_inside_count)
 
 	# compute normals
 	neighbours = ma.kd_tree.query( datadict['coords'][:coord_inside_count,:], k+1 )[1]
@@ -99,10 +102,10 @@ for las_file_path in las_tiles[skip_some_tiles:]:
 
 	io_npy.write_npy(npy_file_path, datadict)
 
-	t_start_lfs = time()
-	metacompute.compute_lfs(datadict)
-	t_stop_lfs = time()
-	logging.info("finished LFS computation in {} s".format(t_stop_lfs-t_start_lfs))
+	# t_start_lfs = time()
+	# metacompute.compute_lfs(datadict)
+	# t_stop_lfs = time()
+	# logging.info("finished LFS computation in {} s".format(t_stop_lfs-t_start_lfs))
 
 	del datadict
 	del ma

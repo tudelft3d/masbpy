@@ -55,6 +55,7 @@ def main(args):
 	normals = p.map(compute_normal, neighbours)
 	t2 = time()
 	print "finished normal computation in {} s".format(t2-t1)
+	p.close()
 	
 	datadict['normals'] = np.array(normals, dtype=np.float32)
 
