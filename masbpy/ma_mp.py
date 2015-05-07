@@ -41,9 +41,10 @@ class MASB(object):
 
         if coord_inside_count != None:
             self.kd_tree = KDTree(self.D['coords'][:coord_inside_count,:])
-            self.coord_inside_count = coord_inside_count
+            self.datalen = coord_inside_count
         else:
             self.kd_tree = KDTree(self.D['coords'])
+            self.datalen = self.m
 
         self.SuperR = max_r
         self.denoise = denoise
@@ -53,13 +54,13 @@ class MASB(object):
     def compute_sp(self):
         from Queue import Queue
         queue = Queue()
-        datalen = self.coord_inside_count
+        datalen = self.datalen
         self(queue,0,datalen, True, False)
         self(queue,0,datalen, False, False)
         return queue.get() + queue.get()
 
     def compute_balls(self, num_processes=cpu_count()):
-        datalen = self.coord_inside_count
+        datalen = self.datalen
         
         n = num_processes/2 # we are spawning 2 processes (inner and outer ma) per n
         batchsize = datalen/n
